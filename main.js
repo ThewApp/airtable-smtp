@@ -46,6 +46,7 @@ console.timeEnd("createTransport");
 const table = airtable.base(options.base)(options.table);
 const results = []
 
+// table.select promise will resolve after the last fetchNextPage call.
 await table.select({
     pageSize: options.page,
     view: "Grid view"
@@ -69,19 +70,20 @@ await table.select({
             attachments
         }
 
+        if (options.debug) console.log(message)
+
         if (options.dryRun) {
-            console.log(message)
             results.push(Promise.resolve(message))
             return
         }
 
-        // const result = transporter.sendMail(message)
-        //     .then((result) => record.updateFields({
-        //         [options.fieldMessageId]:  result.messageId
-        //     }))
-        //     .catch((err) => console.error(record.id, err))
+        const result = transporter.sendMail(message)
+            .then((result) => record.updateFields({
+                [options.fieldMessageId]:  result.messageId
+            }))
+            .catch((err) => console.error(record.id, err))
 
-        // results.push(result)
+        results.push(result)
     });
 
     await Promise.all(results)
