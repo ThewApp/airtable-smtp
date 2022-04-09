@@ -17,6 +17,9 @@ program
     .option("--fieldAttachments <string>", "Airtable attachments field", "attachments")
     .option("--fieldMessageId <string>", "Airtable messageId field", "messageId")
     .option("--maxConnections <number>", "nodemailer maxConnections", 5)
+    .option("-f, --from <email>", "Override Airtable from field for all messages. This can be used for testing.")
+    .option("-t, --to <email>", "Override Airtable to field for all messages. This can be used for testing.")
+    .option("-s, --subject <string>", "Override Airtable subject field for all messages. This can be used for testing.")
     .option("-d, --dry-run", "dry run")
     .option("-v, --verbose", "debug")
     .parse();
@@ -62,9 +65,9 @@ await table.select({
             }))
         }
         const message = {
-            from: record.get(options.fieldFrom),
-            to: record.get(options.fieldTo),
-            subject: record.get(options.fieldSubject),
+            from: options.from ? options.from : record.get(options.fieldFrom),
+            to: options.to ? options.to : record.get(options.fieldTo),
+            subject: options.subject ? options.subject : record.get(options.fieldSubject),
             text: record.get(options.fieldText),
             html: record.get(options.fieldHtml),
             attachments
