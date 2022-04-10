@@ -5,7 +5,8 @@ import airtable from 'airtable'
 program
     .addOption(new Option('-k, --key <key>', 'Airtable api key').env("AIRTABLE_API_KEY").makeOptionMandatory())
     .addOption(new Option('-b, --base <base>', 'Airtable base').env("AIRTABLE_BASE").makeOptionMandatory())
-    .addOption(new Option('-t, --table <base>', 'Airtable table').env("AIRTABLE_TABLE").makeOptionMandatory())
+    .addOption(new Option('-t, --table <table>', 'Airtable table').env("AIRTABLE_TABLE").makeOptionMandatory())
+    .addOption(new Option('-v, --view <view>', 'Airtable view').env("AIRTABLE_VIEW"))
     .addOption(new Option('-u, --user <username>', 'SMTP username').env("USERNAME").makeOptionMandatory())
     .addOption(new Option('-p, --password <password>', 'SMTP password').env("PASSWORD").makeOptionMandatory())
     .option("-p, --page <number>", "Airtable pageSize, the number of records returned in each request.", 100)
@@ -17,15 +18,16 @@ program
     .option("--fieldAttachments <string>", "Airtable attachments field", "attachments")
     .option("--fieldMessageId <string>", "Airtable messageId field", "messageId")
     .option("--maxConnections <number>", "nodemailer maxConnections", 5)
-    .option("-f, --from <email>", "Override Airtable from field for all messages. This can be used for testing.")
-    .option("-t, --to <email>", "Override Airtable to field for all messages. This can be used for testing.")
-    .option("-s, --subject <string>", "Override Airtable subject field for all messages. This can be used for testing.")
+    .option("--skip-verify, --no-verify", "skip SMTP configuration verification", false)
+    .option("--from <email>", "Override Airtable from field for all messages. This can be used for testing.")
+    .option("--to <email>", "Override Airtable to field for all messages. This can be used for testing.")
+    .option("--subject <string>", "Override Airtable subject field for all messages. This can be used for testing.")
     .option("-d, --dry-run", "dry run")
-    .option("-v, --verbose", "debug")
+    .option("-V, --verbose, --debug", "debug")
     .parse();
 const options = program.opts();
 
-if (options.debug) console.log(options)
+if (options.verbose) console.log(options)
 
 airtable.configure({
     endpointUrl: 'https://api.airtable.com',
@@ -43,17 +45,19 @@ const transporter = nodemailer.createTransport({
         pass: options.password,
     },
 });
-await transporter.verify();
+if (options.verify) await transporter.verify();
 console.timeEnd("createTransport");
 
 const table = airtable.base(options.base)(options.table);
 const results = []
 
-// table.select promise will resolve after the last fetchNextPage call.
-await table.select({
+const selectParams = {
     pageSize: options.page,
-    view: "Grid view"
-}).eachPage(async function page(records, fetchNextPage) {
+}
+if (options.view) selectParams.view = options.view
+
+// table.select promise will resolve after the last fetchNextPage call.
+await table.select(selectParams).eachPage(async function page(records, fetchNextPage) {
     console.time(`sendMail ${records.length}`);
     records.forEach(async function (record) {
         let attachments
@@ -73,7 +77,7 @@ await table.select({
             attachments
         }
 
-        if (options.debug) console.log(message)
+        if (options.verbose) console.log(message)
 
         if (options.dryRun) {
             results.push(Promise.resolve(message))

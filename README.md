@@ -4,7 +4,7 @@ Send email with data from [Airtable](https://airtable.com) in Node.js through [S
 
 ## Usage
 
-All parameters that accept env are required. See help.
+See help.
 
 ```sh
 node main.js -h
@@ -49,7 +49,7 @@ node main.js -d # test with dry run
 #### Run
 
 ```sh
-node main.js -v # will show parsed options
+node main.js -V # will show parsed options
 ```
 
 or
@@ -57,3 +57,7 @@ or
 ```sh
 node main.js
 ```
+
+## Thank you!
+
+<a href="https://www.buymeacoffee.com/thew" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
